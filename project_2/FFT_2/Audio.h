@@ -9,8 +9,8 @@ using namespace sf ;
 typedef complex<double> Complex;
 typedef valarray<Complex> CArray;
 class Audio {
-
-	std::string audioFilePath = "./audio/ass.wav";
+    string songPath="ass";
+	std::string audioFilePath = "./audio/"+songPath+".wav";
 
 	sf::Clock clock;
 	const sf::Int16* samples;
@@ -32,7 +32,9 @@ class Audio {
 
 
 	public:
-
+string getPath(){
+return(songPath);
+}
 int _bufferSize=512;
 	    	sf::SoundBuffer buffer;
 sf::Sound song;
