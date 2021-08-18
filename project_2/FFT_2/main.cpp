@@ -173,6 +173,31 @@ int dur;
     seek.setPointCount(64);
     seek.setOrigin(3,3);
     seek.setFillColor(sf::Color::Black);
+sf::Font font;
+
+if(!font.loadFromFile("./Fonts/SF-Pro-Text-Medium.otf")){
+    cerr<<"Error loading file"<<endl;
+}
+int characterSize=32;
+sf::Text text1;
+sf::Text text2;
+sf::Text text3;
+text1.setFont(font);
+text1.setCharacterSize(characterSize);
+text1.setColor(sf::Color::Black);
+text1.setString("Log Base Bars");
+text1.setPosition(534.f,290.f);
+text2.setFont(font);
+text2.setCharacterSize(characterSize);
+text2.setColor(sf::Color::Black);
+text2.setString("Wave");
+text2.setPosition(604.f,550.f);
+text3.setFont(font);
+text3.setCharacterSize(characterSize);
+text3.setColor(sf::Color::Black);
+string songName=audio.getPath();
+text3.setString("Playing: "+songName);
+text3.setPosition(490.f,10.f);
 
 	// Window Loop
 	while (window.isOpen())
@@ -185,7 +210,21 @@ int dur;
 		}
 
 		window.clear(sf::Color::White);
+if(event.type==sf::Event::KeyPressed){
+        //Up and Down to control volume
+    if(event.key.code==sf::Keyboard::Key::Down)
+        audio.song.setVolume(audio.song.getVolume()-10);
+    if(event.key.code==sf::Keyboard::Key::Up)
+        audio.song.setVolume(audio.song.getVolume()+10);
+        //Left and Right to control tracking position
+        if(event.key.code==sf::Keyboard::Key::Right){
+            auto newPos=audio.song.getPlayingOffset()+sf::seconds(5);
+            audio.song.setPlayingOffset(newPos);}
+        if(event.key.code==sf::Keyboard::Key::Left){
+            auto newPos=audio.song.getPlayingOffset()-sf::seconds(5);
+            audio.song.setPlayingOffset(newPos);}
 
+}
 		if (audio.getfrequencyVisualizationVector().size() > 120) {
 
 			visualizer.setAmplitudeVisualizationVector(audio.getAmplitudeVisualizationVector());
@@ -199,7 +238,8 @@ int dur;
 
 			// Draws background for freq rect
 			window.draw(visualizer.getBackgroundRect());
-
+audio.hammingWindow();
+audio.draw(window);
 			// Draws freq visualizer
 			std::vector<sf::RectangleShape> freqRangeRects = visualizer.getFreqRangeRects();
 			for (int i = 0; i < freqRangeRects.size(); i++) {
@@ -224,8 +264,7 @@ int q=pos;
         //std::cout<<v1.y<<std::endl;
 //window.clear();
 
-audio.hammingWindow();
-audio.draw(window);
+
  window.draw(timeline);
 
 
@@ -233,6 +272,9 @@ audio.draw(window);
 
 
         window.draw(seek);
+        window.draw(text1);
+        window.draw(text2);
+        window.draw(text3);
 		window.display();
 q++;
 	}
