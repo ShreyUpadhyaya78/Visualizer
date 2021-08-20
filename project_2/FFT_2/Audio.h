@@ -8,10 +8,10 @@ using namespace std;
 using namespace sf ;
 typedef complex<double> Complex;
 typedef valarray<Complex> CArray;
-class Audio {
-    string songPath="ass";
-	std::string audioFilePath = "./audio/"+songPath+".wav";
 
+class Audio {
+
+string finalPath;
 	sf::Clock clock;
 	const sf::Int16* samples;
 	sf::Uint64 sampleSize;
@@ -32,8 +32,16 @@ class Audio {
 
 
 	public:
+	      void returnPath(string path){
+    finalPath=path;
+     }
+
+    string songPath=finalPath;
+
+string song1Path="Naruto";
+	std::string audioFilePath;
 string getPath(){
-return(songPath);
+return(finalPath);
 }
 int _bufferSize=512;
 	    	sf::SoundBuffer buffer;
@@ -53,8 +61,9 @@ vector<Complex> sample ;
 	int bufferSize ;
 	int mark ;
 
-		Audio() {
+		Audio(string path) {
 //music.openFromFile("./audio/LIGHTS - Slow Down (WRLD Remix).wav");
+audioFilePath="./audio/"+path;
 			if (!buffer.loadFromFile(audioFilePath)) {
 				std::cout << "Couldn't load buffer" << std::endl;
 			}
