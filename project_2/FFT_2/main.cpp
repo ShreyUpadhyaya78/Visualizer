@@ -137,14 +137,55 @@ else
 #include "main.h"
 #include "Audio.h"
 #include "Visualizer.h"
+#include <filesystem>
+#include<direct.h>
+#include<dirent.h>
+#include<cstring>
+#include<string>
+using namespace std;
+namespace fs = std::filesystem;
+
 
 const int WINDOW_X = 1280;
 const int WINDOW_Y = 720;
 
 const int TEXTURE_X = 0.8*WINDOW_X;
 const int TEXTURE_Y = 0.35*WINDOW_Y;
-
+void noman();
 int main() {
+
+      //string path = "./audio";
+
+
+   // for (auto & p : fs::directory_iterator(path)){
+     //   cout << p << endl;
+
+   /// }
+   DIR* dir = opendir("./audio");
+    if (dir == NULL) {
+        return 1;
+    }
+    struct dirent* entity;
+    entity = readdir(dir);
+    string path[10000];
+    int u=0;
+    int inputNum;
+    cout<<"Enter the number of song you want to listen!!"<<endl;
+    while (entity != NULL) {
+if(strcmp(entity->d_name,".")!=0&&strcmp(entity->d_name,"..")!=0){
+        path[u]=entity->d_name;
+        cout<<u-1<<". "<<path[u]<<endl;}
+        u++;
+        entity=readdir(dir);
+
+    }
+cin>>inputNum;
+inputNum+=1;
+cout<<"Selected- "<<path[inputNum]<<endl;
+string songAddress=path[inputNum];
+
+
+
 
 	srand(time(NULL)); // creates a new seed for rand()
 
@@ -158,7 +199,12 @@ int main() {
 	window.setFramerateLimit(60);
 
 int dur;
-	Audio audio = Audio();
+
+	Audio audio = Audio(songAddress);
+audio.returnPath(songAddress);
+
+
+
 	//int dur = audio.duration.asSeconds();
 //audio.playSong();
 	std::thread frequencyAnalyzationThread(&Audio::getSampleOverFrequency, &audio);
@@ -186,20 +232,28 @@ text1.setFont(font);
 text1.setCharacterSize(characterSize);
 text1.setColor(sf::Color::Black);
 text1.setString("Log Base Bars");
-text1.setPosition(534.f,290.f);
+float text1Width=text1.getGlobalBounds().width;
+text1.setPosition((window.getSize().x-text1Width)/2,290.f);
 text2.setFont(font);
 text2.setCharacterSize(characterSize);
 text2.setColor(sf::Color::Black);
 text2.setString("Wave");
-text2.setPosition(604.f,550.f);
+float text2Width=text2.getGlobalBounds().width;
+float text2X=(window.getSize().x-text2Width)/2;
+text2.setPosition(text2X,550.f);
 text3.setFont(font);
 text3.setCharacterSize(characterSize);
 text3.setColor(sf::Color::Black);
 string songName=audio.getPath();
+int len=songName.length();
+songName.erase(len-4,songName.length());
 text3.setString("Playing: "+songName);
-text3.setPosition(490.f,10.f);
+float text3Width=text3.getGlobalBounds().width;
+text3.setPosition((window.getSize().x-text3Width)/2,10.f);
 
-	// Window Loop
+
+
+	// Window Loopt
 	while (window.isOpen())
 	{
 		sf::Event event;
