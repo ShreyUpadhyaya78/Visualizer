@@ -31,7 +31,7 @@ class Audio
 
 
 public:
-  
+
     void returnPath(string path)
     {
         finalPath=path;
@@ -39,7 +39,7 @@ public:
 
     string songPath=finalPath;
 
-  
+
     std::string audioFilePath;
     string getPath()
     {
@@ -50,13 +50,14 @@ public:
     sf::Sound song;
     sf::Music music;
     sf::Time duration;
-   
+
     vector<Complex> sample ;
     vector<float> window ;
     CArray bin ;
-
+    CArray fftbin ;
     VertexArray VA1 ;
     VertexArray VA2 ;
+    VertexArray VA3 ;
     vector<Vertex> cascade ;
 
     int sRate ;
@@ -78,10 +79,9 @@ public:
             song.setBuffer(buffer);
             duration=buffer.getDuration();
             sampleRate = buffer.getSampleRate();
-            // Original sample (unsplit: the samples holding the left and right channels)
             samples = buffer.getSamples();
             sampleSize = buffer.getSampleCount();
-            singleChannelSize = sampleSize / 2;
+
         }
 
         VA1.setPrimitiveType(LineStrip) ;
@@ -90,27 +90,13 @@ public:
         if(_bufferSize < sampleCount) bufferSize = _bufferSize ;
         else bufferSize = sampleCount ;
         mark = 0 ;
-
-        for(int i(0) ; i < bufferSize ; i++) window.push_back(0.54-0.46*cos(2*PI*i/(float)bufferSize)) ;
+//hamming window calculation
+        for(int i(0) ; i < bufferSize ; i++) window.push_back(0.54-0.46*cos(2*PI*i/(float)bufferSize)) ;//hamming window formula
 
         sample.resize(bufferSize) ;
         VA1.resize(bufferSize) ;
     }
-//wave window
-    void hammingWindow()
-    {
-        mark = song.getPlayingOffset().asSeconds()*sampleRate ;
-        if(mark+bufferSize < sampleCount)
-        {
-            for(int i(mark) ; i < bufferSize+mark ; i++)
-            {
-                sample[i-mark] = Complex(buffer.getSamples()[i]*window[i-mark],0) ;
-                VA1[i-mark] = Vertex(Vector2f(310,475)+Vector2f((i-mark)/(float)bufferSize*700,sample[i-mark].real()*0.005),sf::Color::Black) ;
-            }
-        }
 
-    }
-//render wave
 
 //fft calculating recursive function
     void fft(CArray &x)
@@ -131,34 +117,75 @@ public:
             x[k+N/2] = even[k] - t;
         }
     }
-//main function to call fft function 
+//main function to call fft function
     void updateFFT()
     {
         hammingWindow() ;
 
         VA2.clear() ;
+        VA3.clear() ;
 
 
         bin = CArray(sample.data(),bufferSize) ;
-        fft(bin) ;
-        float max = 100000000 ;
+
+        fftbin=bin;
+        fft(fftbin) ;
+        float max = 10000000 ;
 
 
         bars(max);
+        fftbars(max*10);
     }
-//function for calculating log bars
-    void bars(float const& max)
+
+    //wave window
+
+//render wave
+      void hammingWindow()
+    {
+        mark = song.getPlayingOffset().asSeconds()*sampleRate ;
+        if(mark+bufferSize < sampleCount)
+        {
+            for(int i(mark) ; i < bufferSize+mark ; i++)
+            {
+                sample[i-mark] = Complex(buffer.getSamples()[i]*window[i-mark],0) ;
+
+                VA1[i-mark] = Vertex(Vector2f(310,475)+Vector2f((i-mark)/(float)bufferSize*700,sample[i-mark].real()*0.005),sf::Color::Black) ;
+
+            }
+        }
+
+    }
+
+
+    //function for calculating log bars without fft
+      void bars(float const& max)
     {
         VA2.setPrimitiveType(Lines) ;
-        Vector2f position(170,260) ;
+        Vector2f position(620,260) ;
         for(float i(3) ; i < min(bufferSize/2.f,20000.f) ; i*=1.01)
         {
             Vector2f samplePosition(log(i)/log(min((bufferSize)/2.f,20000.f)),abs(bin[(int)i])) ;
-            VA2.append(Vertex(position+Vector2f(samplePosition.x*800,-samplePosition.y/max*15000),sf::Color::Black)) ;
+            VA2.append(Vertex(position+Vector2f(samplePosition.x*620,-samplePosition.y/max*150000),sf::Color::Black)) ;
             //for reflection
-            VA2.append(Vertex(position+Vector2f(samplePosition.x*800,0),sf::Color::Black)) ;
-            VA2.append(Vertex(position+Vector2f(samplePosition.x*800,0),sf::Color(0,0,0,100))) ;
-            VA2.append(Vertex(position+Vector2f(samplePosition.x*800,samplePosition.y/max*15000/2.f),sf::Color(0,0,0,0))) ;
+            VA2.append(Vertex(position+Vector2f(samplePosition.x*620,0),sf::Color::Black)) ;
+            VA2.append(Vertex(position+Vector2f(samplePosition.x*620,0),sf::Color(0,0,0,100))) ;
+            VA2.append(Vertex(position+Vector2f(samplePosition.x*620,samplePosition.y/max*150000/2.f),sf::Color(0,0,0,0))) ;
+        }
+    }
+    
+    //function for calculating log bars with fft
+    void fftbars(float const& max)
+    {
+        VA3.setPrimitiveType(Lines) ;
+        Vector2f position(5,260) ;
+        for(float i(3) ; i < min(bufferSize/2.f,20000.f) ; i*=1.01)
+        {
+            Vector2f samplePosition(log(i)/log(min((bufferSize)/2.f,20000.f)),abs(fftbin[(int)i])) ;
+            VA3.append(Vertex(position+Vector2f(samplePosition.x*620,-samplePosition.y/max*15000),sf::Color::Black)) ;
+            //for reflection
+            VA3.append(Vertex(position+Vector2f(samplePosition.x*620,0),sf::Color::Black)) ;
+            VA3.append(Vertex(position+Vector2f(samplePosition.x*620,0),sf::Color(0,0,0,100))) ;
+            VA3.append(Vertex(position+Vector2f(samplePosition.x*620,samplePosition.y/max*15000/2.f),sf::Color(0,0,0,0))) ;
         }
     }
 //function to draw wave and bars
@@ -166,6 +193,7 @@ public:
     {
         window.draw(VA1) ;
         window.draw(VA2);
+        window.draw(VA3);
     }
 
 //check if song is playing
